@@ -172,7 +172,7 @@ private struct ReviewView: View {
 
     private func photoCard(for asset: PHAsset) -> some View {
         PhotoAssetImage(asset: asset)
-            .frame(maxWidth: 900, maxHeight: .infinity, minHeight: 300)
+            .frame(maxWidth: 900, minHeight: 300, maxHeight: .infinity)
             .frame(maxWidth: .infinity)
             .layoutPriority(1)
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
