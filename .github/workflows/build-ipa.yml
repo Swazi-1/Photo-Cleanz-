@@ -1,0 +1,65 @@
+name: Build unsigned IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      workspace_path:
+        description: "Optional path to the .xcworkspace (relative to the repository root)"
+        required: false
+        type: string
+      project_path:
+        description: "Optional path to the .xcodeproj (relative to the repository root)"
+        required: false
+        type: string
+      scheme:
+        description: "Optional Xcode scheme; the first shared scheme is used when blank"
+        required: false
+        type: string
+      configuration:
+        description: "Xcode configuration"
+        required: false
+        default: Release
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - "**/*.xcodeproj/**"
+      - "**/*.xcworkspace/**"
+      - "**/*.swift"
+      - "**/*.m"
+      - "**/*.mm"
+      - "Package.swift"
+      - "Package.resolved"
+      - "scripts/build_ipa.sh"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Archive and package IPA
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      WORKSPACE_PATH: ${{ inputs.workspace_path }}
+      PROJECT_PATH: ${{ inputs.project_path }}
+      SCHEME: ${{ inputs.scheme }}
+      CONFIGURATION: ${{ inputs.configuration || 'Release' }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: xcodebuild -version
+
+      - name: Build unsigned IPA
+        shell: bash
+        run: bash scripts/build_ipa.sh
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Photo-Cleanz-IPA-${{ github.run_number }}
+          path: dist/*.ipa
+          if-no-files-found: error
+          retention-days: 14
