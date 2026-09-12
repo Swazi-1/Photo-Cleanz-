@@ -135,38 +135,7 @@ private struct ReviewView: View {
     @ObservedObject var model: PhotoLibraryViewModel
 
     var body: some View {
-        VStack(spacing: 16) {
-            header
-
-            if let asset = model.currentAsset {
-                PhotoAssetImage(asset: asset)
-                    .frame(maxWidth: 900, maxHeight: .infinity, minHeight: 300)
-                    .frame(maxWidth: .infinity)
-                    .layoutPriority(1)
-                    .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .stroke(.white.opacity(0.12), lineWidth: 1)
-                    }
-                    .overlay(alignment: .topLeading) {
-                        Text("PHOTO \(model.currentIndex + 1)")
-                            .font(.caption.weight(.bold))
-                            .tracking(1.2)
-                            .foregroundStyle(.white.opacity(0.9))
-                            .padding(.horizontal, 11)
-                            .padding(.vertical, 7)
-                            .background(.black.opacity(0.48), in: Capsule())
-                            .padding(14)
-                    }
-                    .contentShape(Rectangle())
-                    .gesture(swipeGesture)
-                    .accessibilityLabel("Photo to review")
-            } else {
-                finishedView
-            }
-
-            controls
-        }
+        reviewStack
         .padding(.horizontal, 18)
         .padding(.top, 12)
         .padding(.bottom, 10)
@@ -180,15 +149,66 @@ private struct ReviewView: View {
                 .stroke(.white.opacity(0.08), lineWidth: 1)
         }
         .overlay {
-            if model.isLoading {
-                ZStack {
-                    Color.black.opacity(0.38)
-                    ProgressView()
-                        .tint(.mint)
-                        .scaleEffect(1.2)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            loadingOverlay
+        }
+    }
+
+    private var reviewStack: some View {
+        VStack(spacing: 16) {
+            header
+            reviewContent
+            controls
+        }
+    }
+
+    @ViewBuilder
+    private var reviewContent: some View {
+        if let asset = model.currentAsset {
+            photoCard(for: asset)
+        } else {
+            finishedView
+        }
+    }
+
+    private func photoCard(for asset: PHAsset) -> some View {
+        PhotoAssetImage(asset: asset)
+            .frame(maxWidth: 900, maxHeight: .infinity, minHeight: 300)
+            .frame(maxWidth: .infinity)
+            .layoutPriority(1)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(.white.opacity(0.12), lineWidth: 1)
             }
+            .overlay(alignment: .topLeading) {
+                photoBadge
+            }
+            .contentShape(Rectangle())
+            .gesture(swipeGesture)
+            .accessibilityLabel("Photo to review")
+    }
+
+    private var photoBadge: some View {
+        Text("PHOTO \(model.currentIndex + 1)")
+            .font(.caption.weight(.bold))
+            .tracking(1.2)
+            .foregroundStyle(.white.opacity(0.9))
+            .padding(.horizontal, 11)
+            .padding(.vertical, 7)
+            .background(.black.opacity(0.48), in: Capsule())
+            .padding(14)
+    }
+
+    @ViewBuilder
+    private var loadingOverlay: some View {
+        if model.isLoading {
+            ZStack {
+                Color.black.opacity(0.38)
+                ProgressView()
+                    .tint(.mint)
+                    .scaleEffect(1.2)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
 
