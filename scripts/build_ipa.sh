@@ -35,8 +35,15 @@ elif [[ -n "$requested_project" ]]; then
 else
   # Every .xcodeproj contains an internal project.xcworkspace. It is not an
   # app workspace and must not win automatic discovery.
-  mapfile -t workspaces < <(find . -maxdepth 5 -type d -name '*.xcworkspace' -not -path '*/*.xcodeproj/project.xcworkspace' -not -path '*/Pods/*' -print | sort)
-  mapfile -t projects < <(find . -maxdepth 5 -type d -name '*.xcodeproj' -not -path '*/Pods/*' -print | sort)
+  workspaces=()
+  while IFS= read -r workspace; do
+    workspaces+=("$workspace")
+  done < <(find . -maxdepth 5 -type d -name '*.xcworkspace' -not -path '*/*.xcodeproj/project.xcworkspace' -not -path '*/Pods/*' -print | sort)
+
+  projects=()
+  while IFS= read -r project; do
+    projects+=("$project")
+  done < <(find . -maxdepth 5 -type d -name '*.xcodeproj' -not -path '*/Pods/*' -print | sort)
 
   if (( ${#workspaces[@]} == 1 )); then
     container_path="${workspaces[0]}"
@@ -99,7 +106,10 @@ xcodebuild \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGN_IDENTITY=''
 
-mapfile -t app_bundles < <(find "$archive_path/Products/Applications" -maxdepth 1 -type d -name '*.app' -print | sort)
+app_bundles=()
+while IFS= read -r app_bundle; do
+  app_bundles+=("$app_bundle")
+done < <(find "$archive_path/Products/Applications" -maxdepth 1 -type d -name '*.app' -print | sort)
 (( ${#app_bundles[@]} == 1 )) || fail "Expected one application bundle in the archive; found ${#app_bundles[@]}."
 app_path="${app_bundles[0]}"
 
