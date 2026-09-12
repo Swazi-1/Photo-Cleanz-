@@ -8,7 +8,14 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            Color(red: 0.055, green: 0.055, blue: 0.075)
+            LinearGradient(
+                colors: [
+                    Color(red: 0.10, green: 0.12, blue: 0.14),
+                    Color(red: 0.035, green: 0.04, blue: 0.055)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
                 .ignoresSafeArea()
 
             switch model.authorizationStatus {
@@ -133,11 +140,23 @@ private struct ReviewView: View {
 
             if let asset = model.currentAsset {
                 PhotoAssetImage(asset: asset)
-                    .frame(maxWidth: 900, maxHeight: .infinity)
+                    .frame(maxWidth: 900, maxHeight: .infinity, minHeight: 300)
+                    .frame(maxWidth: .infinity)
+                    .layoutPriority(1)
                     .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: 28, style: .continuous)
                             .stroke(.white.opacity(0.12), lineWidth: 1)
+                    }
+                    .overlay(alignment: .topLeading) {
+                        Text("PHOTO \(model.currentIndex + 1)")
+                            .font(.caption.weight(.bold))
+                            .tracking(1.2)
+                            .foregroundStyle(.white.opacity(0.9))
+                            .padding(.horizontal, 11)
+                            .padding(.vertical, 7)
+                            .background(.black.opacity(0.48), in: Capsule())
+                            .padding(14)
                     }
                     .contentShape(Rectangle())
                     .gesture(swipeGesture)
@@ -151,6 +170,15 @@ private struct ReviewView: View {
         .padding(.horizontal, 18)
         .padding(.top, 12)
         .padding(.bottom, 10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(.white.opacity(0.045))
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .stroke(.white.opacity(0.08), lineWidth: 1)
+        }
         .overlay {
             if model.isLoading {
                 ZStack {
@@ -165,11 +193,11 @@ private struct ReviewView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 10) {
-            HStack(alignment: .top) {
+        VStack(spacing: 8) {
+            HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Photo Cleanz")
-                        .font(.largeTitle.bold())
+                        .font(.title2.weight(.bold))
                     Text(model.currentAsset == nil ? "Review complete" : "Keep the good stuff")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -182,23 +210,30 @@ private struct ReviewView: View {
                         model.requestDelete()
                     } label: {
                         Label("Delete \(model.pendingDeleteCount)", systemImage: "trash.fill")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.callout.weight(.semibold))
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.red)
+                    .controlSize(.regular)
                 }
             }
 
-            ProgressView(
-                value: Double(model.currentIndex),
-                total: Double(max(model.assets.count, 1))
-            )
-            .tint(.mint)
+            HStack {
+                ProgressView(
+                    value: Double(model.currentIndex),
+                    total: Double(max(model.assets.count, 1))
+                )
+                .tint(.mint)
+
+                Text("\(model.currentIndex)/\(model.assets.count)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
 
             HStack {
-                Text("\(model.remainingCount) left")
+                Label("\(model.remainingCount) left", systemImage: "square.stack.3d.up")
                 Spacer()
-                Text("\(model.pendingDeleteCount) marked")
+                Label("\(model.pendingDeleteCount) marked", systemImage: "trash")
             }
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -212,7 +247,7 @@ private struct ReviewView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                HStack(spacing: 18) {
+                HStack(spacing: 12) {
                     decisionButton(
                         title: "Delete",
                         systemImage: "trash",
@@ -265,10 +300,11 @@ private struct ReviewView: View {
             Label(title, systemImage: systemImage)
                 .font(.headline)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
+                .padding(.vertical, 11)
         }
         .buttonStyle(.borderedProminent)
         .tint(tint)
+        .controlSize(.large)
     }
 
     private var finishedView: some View {

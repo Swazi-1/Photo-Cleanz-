@@ -51,6 +51,18 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
+      - name: Select Xcode 26
+        shell: bash
+        run: |
+          xcode_app="$(find /Applications -maxdepth 1 -type d -name 'Xcode_26*.app' -print | sort | tail -n 1)"
+          if [[ -z "$xcode_app" ]]; then
+            echo "::error::Xcode 26 is required for the iOS 26 deployment target."
+            exit 1
+          fi
+          developer_dir="$xcode_app/Contents/Developer"
+          echo "DEVELOPER_DIR=$developer_dir" >> "$GITHUB_ENV"
+          sudo xcode-select -s "$developer_dir"
+
       - name: Show toolchain
         run: xcodebuild -version
 

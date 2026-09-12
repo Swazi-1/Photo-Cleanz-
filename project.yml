@@ -3,7 +3,7 @@ name: PhotoCleanz
 options:
   bundleIdPrefix: com.swazi
   deploymentTarget:
-    iOS: "17.0"
+    iOS: "26.0"
   createIntermediateGroups: true
 
 settings:
