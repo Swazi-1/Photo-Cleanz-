@@ -30,6 +30,8 @@ on:
       - "**/*.mm"
       - "Package.swift"
       - "Package.resolved"
+      - "project.yml"
+      - "Resources/**"
       - "scripts/build_ipa.sh"
 
 permissions:
@@ -51,6 +53,21 @@ jobs:
 
       - name: Show toolchain
         run: xcodebuild -version
+
+      - name: Generate Xcode project
+        shell: bash
+        run: |
+          if [[ ! -f project.yml ]]; then
+            exit 0
+          fi
+          if find . -maxdepth 5 -type d \( -name '*.xcodeproj' -o -name '*.xcworkspace' \) -print -quit | grep -q .; then
+            echo "An Xcode project/workspace is already present; skipping XcodeGen."
+            exit 0
+          fi
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+          xcodegen generate --spec project.yml
 
       - name: Build unsigned IPA
         shell: bash
