@@ -92,6 +92,8 @@ for old_ipa in "$output_dir"/Photo-Cleanz-*.ipa; do
   [[ -e "$old_ipa" ]] && rm -f "$old_ipa"
 done
 
+build_log="$build_root/xcodebuild.log"
+set +e
 xcodebuild \
   "${build_target[@]}" \
   -scheme "$scheme" \
@@ -104,7 +106,40 @@ xcodebuild \
   SKIP_INSTALL=NO \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
-  CODE_SIGN_IDENTITY=''
+  CODE_SIGN_IDENTITY='' 2>&1 | tee "$build_log"
+build_status=${PIPESTATUS[0]}
+set -e
+
+if (( build_status != 0 )); then
+  failure_lines="$build_root/failure-lines.log"
+  grep -E '(^|[[:space:]])(error:|fatal error:)|BUILD FAILED|ARCHIVE FAILED' "$build_log" \
+    | tail -n 40 > "$failure_lines" || true
+
+  if [[ -s "$failure_lines" ]]; then
+    while IFS= read -r failure_line; do
+      echo "::error::$failure_line"
+    done < "$failure_lines"
+  else
+    echo "::error::xcodebuild failed with exit code $build_status; no matching error lines were found."
+  fi
+
+  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    {
+      echo "## xcodebuild failed"
+      echo
+      echo "Exit code: `$build_status`"
+      echo
+      echo '```text'
+      if [[ -s "$failure_lines" ]]; then
+        cat "$failure_lines"
+      else
+        tail -n 40 "$build_log"
+      fi
+      echo '```'
+    } >> "$GITHUB_STEP_SUMMARY"
+  fi
+  exit "$build_status"
+fi
 
 app_bundles=()
 while IFS= read -r app_bundle; do
